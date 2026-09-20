@@ -6,56 +6,131 @@
 
   <title>Pilemma</title>
 
+  <!-- Alegreya SC + Afacad -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Afacad:ital,wght@0,400;0,500;0,600;1,400&family=Alegreya+SC:wght@500;600;700&family=Noto+Serif+KR:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  >
+
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       margin: 0;
       background: #ffffff;
-      color: #111111;
-      font-family: Arial, Helvetica, sans-serif;
+      color: #151515;
+      font-family: "Afacad", sans-serif;
     }
 
     .page {
       width: min(88vw, 650px);
-      margin: 60px auto 100px;
+      margin: 42px auto 110px;
+    }
+
+    /* ---------- opening ---------- */
+
+    .opening {
+      min-height: 100vh;
+    }
+
+    .word {
+      margin: 28px 0 4px;
+      font-family: "Alegreya SC", serif;
+      font-size: clamp(3rem, 7vw, 4.6rem);
+      font-weight: 600;
+      line-height: 0.95;
+      letter-spacing: 0.012em;
+    }
+
+    .image-wrap {
+      display: flex;
+      justify-content: center;
     }
 
     .hero {
       display: block;
       width: 100%;
       height: auto;
+      cursor: zoom-in;
     }
+
+    /* ---------- image zoom ---------- */
+
+    .zoom-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.96);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease;
+      z-index: 50;
+    }
+
+    .zoom-backdrop.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .hero.zoomed {
+      position: fixed;
+      z-index: 100;
+      top: 50%;
+      left: 50%;
+      width: auto;
+      max-width: 92vw;
+      max-height: 92vh;
+      transform: translate(-50%, -50%);
+      cursor: zoom-out;
+    }
+
+    /* ---------- dictionary ---------- */
 
     .dictionary {
-      margin-top: 42px;
-      max-width: 590px;
-    }
-
-    .word {
-      margin: 0 0 6px;
-      font-size: 2rem;
-      font-weight: 700;
-      line-height: 1.1;
+      max-width: 620px;
+      padding-top: 18px;
     }
 
     .meta {
-      margin-bottom: 28px;
-      font-size: 1rem;
-      line-height: 1.5;
+      margin-bottom: 0;
+      font-size: 1.38rem;
+      line-height: 1.28;
+      color: #3f3f3f;
     }
 
-    .meta em {
+    .meta .noun {
       margin-left: 8px;
+      font-style: italic;
+    }
+
+    .ipa {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      font-size: 0.88em;
+    }
+
+    .pi-symbol {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      font-size: 0.86em;
+      font-weight: 600;
     }
 
     .definitions {
       margin: 0;
-      padding-left: 1.55rem;
+      padding-left: 1.7rem;
+      font-size: 1.42rem;
+      line-height: 1.38;
     }
 
     .definitions li {
-      margin-bottom: 14px;
-      padding-left: 0.3rem;
-      line-height: 1.55;
+      padding-left: 0.35rem;
+      margin-bottom: 6px;
     }
 
     .dictionary a {
@@ -69,19 +144,38 @@
       opacity: 0.65;
     }
 
+    /* Korean: a quieter bookish face that fits the dictionary mood */
+    .ko {
+      font-family: "Noto Serif KR", serif;
+      font-weight: 500;
+      font-size: 0.92em;
+      letter-spacing: -0.015em;
+    }
+
     @media (max-width: 600px) {
       .page {
         width: 90vw;
-        margin-top: 28px;
+        margin-top: 26px;
         margin-bottom: 70px;
       }
 
-      .dictionary {
-        margin-top: 32px;
+      .opening {
+        min-height: 92vh;
       }
 
       .word {
-        font-size: 1.7rem;
+        margin-top: 22px;
+        margin-bottom: 3px;
+        font-size: clamp(2.8rem, 14vw, 4rem);
+      }
+
+      .meta {
+        font-size: 1.28rem;
+      }
+
+      .definitions {
+        font-size: 1.3rem;
+        padding-left: 1.55rem;
       }
     }
   </style>
@@ -89,24 +183,33 @@
 
 <body>
 
+  <div class="zoom-backdrop" id="zoomBackdrop"></div>
+
   <main class="page">
 
-    <img
-      src="hello.jpg"
-      alt="Pilemma"
-      class="hero"
-    >
-
-    <section class="dictionary">
+    <!-- First screen: photograph, then the word -->
+    <section class="opening">
+      <div class="image-wrap">
+        <img
+          src="hello.jpg"
+          alt="Pilemma"
+          class="hero"
+          id="heroImage"
+        >
+      </div>
 
       <h1 class="word">pilemma</h1>
 
       <div class="meta">
-        /piːˈlɛmə/ <em>noun</em>
+        <span class="ipa">/piːˈlɛmə/</span>
+        <span class="noun">noun</span>
       </div>
+    </section>
+
+    <!-- Scroll down for the dictionary entry -->
+    <section class="dictionary">
 
       <ol class="definitions">
-
         <li>
           a pile of <a
             href="https://en.wiktionary.org/wiki/lemma"
@@ -116,18 +219,41 @@
         </li>
 
         <li>
-          a.k.a. <strong>π-lemma</strong>: an irrational version of a dilemma.
+          a.k.a. <strong><span class="pi-symbol">π</span>-lemma</strong>: an irrational version of a dilemma.
         </li>
 
         <li>
-          cf. <strong>필름</strong> (<em>pilleum</em>), “film.”
+          cf. <span class="ko">필름</span> (<em>pilleum</em>), “film.”
         </li>
-
       </ol>
 
     </section>
 
   </main>
+
+  <script>
+    const image = document.getElementById("heroImage");
+    const backdrop = document.getElementById("zoomBackdrop");
+
+    function toggleZoom() {
+      const isZoomed = image.classList.toggle("zoomed");
+      backdrop.classList.toggle("active", isZoomed);
+    }
+
+    function closeZoom() {
+      image.classList.remove("zoomed");
+      backdrop.classList.remove("active");
+    }
+
+    image.addEventListener("dblclick", toggleZoom);
+    backdrop.addEventListener("click", closeZoom);
+
+    document.addEventListener("keydown", function(event) {
+      if (event.key === "Escape") {
+        closeZoom();
+      }
+    });
+  </script>
 
 </body>
 </html>
