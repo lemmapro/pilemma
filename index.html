@@ -55,11 +55,34 @@
       justify-content: center;
     }
 
+    .image-stack {
+      position: relative;
+      width: 100%;
+      cursor: zoom-in;
+    }
+
     .hero {
       display: block;
       width: 100%;
       height: auto;
-      cursor: zoom-in;
+    }
+
+    .hero-color {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      pointer-events: none;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .image-stack:hover .hero-color {
+        opacity: 1;
+      }
+    }
+
+    .image-stack.show-color .hero-color {
+      opacity: 1;
     }
 
     /* ---------- image zoom ---------- */
@@ -79,16 +102,20 @@
       visibility: visible;
     }
 
-    .hero.zoomed {
+    .image-stack.zoomed {
       position: fixed;
       z-index: 100;
       top: 50%;
       left: 50%;
-      width: auto;
-      max-width: 92vw;
+      width: min(92vw, 900px);
       max-height: 92vh;
       transform: translate(-50%, -50%);
       cursor: zoom-out;
+    }
+
+    .image-stack.zoomed .hero {
+      max-height: 92vh;
+      object-fit: contain;
     }
 
     /* ---------- dictionary ---------- */
@@ -148,7 +175,7 @@
     .ko {
       font-family: "Noto Serif KR", serif;
       font-weight: 500;
-      font-size: 0.92em;
+      font-size: 0.84em;
       letter-spacing: -0.015em;
     }
 
@@ -160,7 +187,11 @@
       }
 
       .opening {
-        min-height: 92vh;
+        min-height: auto;
+      }
+
+      .dictionary {
+        padding-top: 24px;
       }
 
       .word {
@@ -190,12 +221,19 @@
     <!-- First screen: photograph, then the word -->
     <section class="opening">
       <div class="image-wrap">
-        <img
-          src="hello.jpg"
-          alt="Pilemma"
-          class="hero"
-          id="heroImage"
-        >
+        <div class="image-stack" id="heroImage">
+          <img
+            src="hello.jpg"
+            alt="Pilemma"
+            class="hero hero-bw"
+          >
+          <img
+            src="world.jpg"
+            alt=""
+            class="hero hero-color"
+            aria-hidden="true"
+          >
+        </div>
       </div>
 
       <h1 class="word">pilemma</h1>
@@ -234,6 +272,7 @@
   <script>
     const image = document.getElementById("heroImage");
     const backdrop = document.getElementById("zoomBackdrop");
+    const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
     function toggleZoom() {
       const isZoomed = image.classList.toggle("zoomed");
@@ -246,6 +285,13 @@
     }
 
     image.addEventListener("dblclick", toggleZoom);
+
+    if (!canHover) {
+      image.addEventListener("click", function() {
+        image.classList.toggle("show-color");
+      });
+    }
+
     backdrop.addEventListener("click", closeZoom);
 
     document.addEventListener("keydown", function(event) {
