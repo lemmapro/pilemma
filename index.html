@@ -426,6 +426,9 @@
         "wanderingCircle"
       );
 
+    const circleDestination =
+      "https://lemmapro.github.io/ddaddam_lacma/";
+
     let circleX = 30;
     let circleY = 30;
 
@@ -528,6 +531,10 @@
       let desktopLatchedPaused = false;
       let desktopHoverTimer = null;
 
+      let desktopPointerStartX = 0;
+      let desktopPointerStartY = 0;
+      let desktopDidDrag = false;
+
       const desktopLongHoverDelay = 3000;
 
 
@@ -557,16 +564,17 @@
 
               if (desktopLatchedPaused) {
 
-                /* second long hover: release it */
+                /*
+                  Second long hover:
+                  unlock it, but keep it paused
+                  until the pointer actually leaves.
+                */
                 desktopLatchedPaused = false;
-                circlePaused = false;
+                circlePaused = true;
 
-                circle.classList.remove(
+                circle.classList.add(
                   "hovered"
                 );
-
-                previousCircleTime =
-                  performance.now();
 
               } else {
 
@@ -636,6 +644,14 @@
 
           clearDesktopHoverTimer();
 
+          desktopPointerStartX =
+            event.clientX;
+
+          desktopPointerStartY =
+            event.clientY;
+
+          desktopDidDrag = false;
+
           isDragging = true;
           circlePaused = true;
 
@@ -666,6 +682,23 @@
 
           if (!isDragging) return;
 
+          const desktopDX =
+            event.clientX -
+            desktopPointerStartX;
+
+          const desktopDY =
+            event.clientY -
+            desktopPointerStartY;
+
+          if (
+            Math.hypot(
+              desktopDX,
+              desktopDY
+            ) > dragThreshold
+          ) {
+            desktopDidDrag = true;
+          }
+
           setCirclePosition(
             event.clientX - dragOffsetX,
             event.clientY - dragOffsetY
@@ -694,6 +727,17 @@
             circle.releasePointerCapture(
               event.pointerId
             );
+          }
+
+          /*
+            Desktop:
+            a click opens the linked page.
+            A real drag keeps the circle on this page.
+          */
+          if (!desktopDidDrag) {
+            window.location.href =
+              circleDestination;
+            return;
           }
 
           /*
@@ -815,6 +859,9 @@
     ================================================= */
 
     let mobileCircleState = 0;
+
+    let mobileTapTimer = null;
+    const mobileDoubleTapDelay = 300;
 
     function applyMobileCircleState() {
 
@@ -978,7 +1025,38 @@
             return;
           }
 
-          advanceMobileCircleState();
+          /*
+            Mobile:
+            wait briefly before treating this as
+            a single tap. If a second tap arrives
+            within 300 ms, open the linked page
+            instead of advancing the circle twice.
+          */
+
+          if (mobileTapTimer !== null) {
+
+            clearTimeout(
+              mobileTapTimer
+            );
+
+            mobileTapTimer = null;
+
+            window.location.href =
+              circleDestination;
+
+            return;
+          }
+
+          mobileTapTimer =
+            setTimeout(
+              function () {
+
+                mobileTapTimer = null;
+
+                advanceMobileCircleState();
+              },
+              mobileDoubleTapDelay
+            );
         }
       );
 
@@ -986,6 +1064,13 @@
       circle.addEventListener(
         "pointercancel",
         function () {
+
+          if (mobileTapTimer !== null) {
+            clearTimeout(
+              mobileTapTimer
+            );
+            mobileTapTimer = null;
+          }
 
           isDragging = false;
           pointerMoved = false;
