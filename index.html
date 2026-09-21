@@ -426,7 +426,7 @@
     let circleX = 100;
     let circleY = 100;
 
-    /* wandering speed */
+    const circleSpeed = Math.hypot(12, 8);
     let circleVX = 12;
     let circleVY = 8;
 
@@ -436,6 +436,12 @@
     let dragOffsetX = 0;
     let dragOffsetY = 0;
 
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+    let pointerMoved = false;
+
+    const dragThreshold = 8;
+
     let previousCircleTime =
       performance.now();
 
@@ -444,187 +450,551 @@
         "(prefers-reduced-motion: reduce)"
       ).matches;
 
-
-    /* ------------------------------
-       Hover
-    ------------------------------ */
-
-    function pauseCircle() {
-      circlePaused = true;
-      circle.classList.add("hovered");
-    }
-
-    function resumeCircle() {
-      if (isDragging) return;
-
-      circlePaused = false;
-      circle.classList.remove("hovered");
-
-      previousCircleTime =
-        performance.now();
-    }
-
-    circle.addEventListener(
-      "pointerenter",
-      pauseCircle
-    );
-
-    circle.addEventListener(
-      "pointerleave",
-      resumeCircle
-    );
+    const circleCanHover =
+      window.matchMedia(
+        "(hover: hover) and (pointer: fine)"
+      ).matches;
 
 
     /* ------------------------------
-       Dragging
+       Shared helpers
     ------------------------------ */
 
-    circle.addEventListener(
-      "pointerdown",
-      function (event) {
+    function randomizeCircleDirection() {
+      const angle =
+        Math.random() * Math.PI * 2;
 
-        isDragging = true;
+      circleVX =
+        circleSpeed * Math.cos(angle);
+
+      circleVY =
+        circleSpeed * Math.sin(angle);
+    }
+
+    function setCirclePosition(x, y) {
+      const size =
+        circle.offsetWidth;
+
+      const maxX =
+        window.innerWidth - size;
+
+      const maxY =
+        window.innerHeight - size;
+
+      circleX = Math.max(
+        0,
+        Math.min(maxX, x)
+      );
+
+      circleY = Math.max(
+        0,
+        Math.min(maxY, y)
+      );
+
+      circle.style.left =
+        `${circleX}px`;
+
+      circle.style.top =
+        `${circleY}px`;
+    }
+
+
+    /* =================================================
+       DESKTOP
+
+       Short hover:
+       pause while the pointer is over the circle,
+       then continue when the pointer leaves.
+
+       Long hover (3 seconds):
+       toggle a "latched" pause.
+
+       First 3-second hover:
+       the circle stays stopped even after the pointer leaves.
+
+       Next 3-second hover:
+       the circle is released and starts moving again.
+
+       Dragging:
+       move the circle by hand; the next moving direction
+       is randomized, as before.
+    ================================================= */
+
+    if (circleCanHover) {
+
+      let desktopLatchedPaused = false;
+      let desktopHoverTimer = null;
+
+      const desktopLongHoverDelay = 3000;
+
+
+      function clearDesktopHoverTimer() {
+        if (desktopHoverTimer !== null) {
+          clearTimeout(desktopHoverTimer);
+          desktopHoverTimer = null;
+        }
+      }
+
+
+      function startDesktopHoverTimer() {
+
+        clearDesktopHoverTimer();
+
+        desktopHoverTimer =
+          setTimeout(
+            function () {
+
+              desktopHoverTimer = null;
+
+              if (isDragging) return;
+
+              /*
+                Long hover toggles the persistent state.
+              */
+
+              if (desktopLatchedPaused) {
+
+                /* second long hover: release it */
+                desktopLatchedPaused = false;
+                circlePaused = false;
+
+                circle.classList.remove(
+                  "hovered"
+                );
+
+                previousCircleTime =
+                  performance.now();
+
+              } else {
+
+                /* first long hover: keep it stopped */
+                desktopLatchedPaused = true;
+                circlePaused = true;
+
+                circle.classList.add(
+                  "hovered"
+                );
+              }
+            },
+            desktopLongHoverDelay
+          );
+      }
+
+
+      function pauseCircleDesktop() {
+
         circlePaused = true;
 
-        circle.classList.add("hovered");
-        circle.classList.add("dragging");
-
-        circle.setPointerCapture(
-          event.pointerId
+        circle.classList.add(
+          "hovered"
         );
 
-        dragOffsetX =
-          event.clientX - circleX;
-
-        dragOffsetY =
-          event.clientY - circleY;
+        startDesktopHoverTimer();
       }
-    );
 
 
-    circle.addEventListener(
-      "pointermove",
-      function (event) {
+      function leaveCircleDesktop() {
 
-        if (!isDragging) return;
-
-        const size =
-          circle.offsetWidth;
-
-        const maxX =
-          window.innerWidth - size;
-
-        const maxY =
-          window.innerHeight - size;
-
-        circleX =
-          event.clientX - dragOffsetX;
-
-        circleY =
-          event.clientY - dragOffsetY;
-
-        /* Keep it inside the browser window */
-
-        circleX = Math.max(
-          0,
-          Math.min(maxX, circleX)
-        );
-
-        circleY = Math.max(
-          0,
-          Math.min(maxY, circleY)
-        );
-
-        circle.style.left =
-          `${circleX}px`;
-
-        circle.style.top =
-          `${circleY}px`;
-      }
-    );
-
-
-    circle.addEventListener(
-      "pointerup",
-      function (event) {
-
-        isDragging = false;
-
-        circle.classList.remove(
-          "dragging"
-        );
-
-        if (
-          circle.hasPointerCapture(
-            event.pointerId
-          )
-        ) {
-          circle.releasePointerCapture(
-            event.pointerId
-          );
-        }
-
-        /*
-          If the pointer is still over the circle,
-          keep it expanded and paused.
-        */
-
-        if (circle.matches(":hover")) {
-
-          circlePaused = true;
-          circle.classList.add(
-            "hovered"
-          );
-
-        } else {
-
-          circlePaused = false;
-          circle.classList.remove(
-            "hovered"
-          );
-        }
-
-        previousCircleTime =
-          performance.now();
-      }
-    );
-
-
-    circle.addEventListener(
-      "pointercancel",
-      function () {
-
-        isDragging = false;
-
-        circle.classList.remove(
-          "dragging"
-        );
+        clearDesktopHoverTimer();
 
         circle.classList.remove(
           "hovered"
         );
+
+        if (
+          isDragging ||
+          desktopLatchedPaused
+        ) {
+          circlePaused = true;
+          return;
+        }
 
         circlePaused = false;
 
         previousCircleTime =
           performance.now();
       }
-    );
 
 
-    /* ------------------------------
-       Keyboard
-    ------------------------------ */
+      circle.addEventListener(
+        "pointerenter",
+        pauseCircleDesktop
+      );
 
-    circle.addEventListener(
-      "focus",
-      pauseCircle
-    );
+      circle.addEventListener(
+        "pointerleave",
+        leaveCircleDesktop
+      );
 
-    circle.addEventListener(
-      "blur",
-      resumeCircle
-    );
+
+      circle.addEventListener(
+        "pointerdown",
+        function (event) {
+
+          clearDesktopHoverTimer();
+
+          isDragging = true;
+          circlePaused = true;
+
+          circle.classList.add(
+            "hovered"
+          );
+
+          circle.classList.add(
+            "dragging"
+          );
+
+          circle.setPointerCapture(
+            event.pointerId
+          );
+
+          dragOffsetX =
+            event.clientX - circleX;
+
+          dragOffsetY =
+            event.clientY - circleY;
+        }
+      );
+
+
+      circle.addEventListener(
+        "pointermove",
+        function (event) {
+
+          if (!isDragging) return;
+
+          setCirclePosition(
+            event.clientX - dragOffsetX,
+            event.clientY - dragOffsetY
+          );
+        }
+      );
+
+
+      circle.addEventListener(
+        "pointerup",
+        function (event) {
+
+          if (!isDragging) return;
+
+          isDragging = false;
+
+          circle.classList.remove(
+            "dragging"
+          );
+
+          if (
+            circle.hasPointerCapture(
+              event.pointerId
+            )
+          ) {
+            circle.releasePointerCapture(
+              event.pointerId
+            );
+          }
+
+          /*
+            Every time the circle is moved by hand,
+            its next journey gets a new direction.
+          */
+          randomizeCircleDirection();
+
+          if (circle.matches(":hover")) {
+
+            circlePaused = true;
+
+            circle.classList.add(
+              "hovered"
+            );
+
+            /*
+              Once dragging ends, hovering begins again.
+              Holding for another 3 seconds can therefore
+              toggle the latched state.
+            */
+            startDesktopHoverTimer();
+
+          } else {
+
+            circle.classList.remove(
+              "hovered"
+            );
+
+            if (desktopLatchedPaused) {
+              circlePaused = true;
+            } else {
+              circlePaused = false;
+
+              previousCircleTime =
+                performance.now();
+            }
+          }
+        }
+      );
+
+
+      circle.addEventListener(
+        "pointercancel",
+        function () {
+
+          clearDesktopHoverTimer();
+
+          isDragging = false;
+
+          circle.classList.remove(
+            "dragging"
+          );
+
+          circle.classList.remove(
+            "hovered"
+          );
+
+          circlePaused =
+            desktopLatchedPaused;
+
+          previousCircleTime =
+            performance.now();
+        }
+      );
+
+
+      /*
+        Keyboard focus still pauses the circle,
+        but it does not count as a 3-second hover.
+      */
+
+      circle.addEventListener(
+        "focus",
+        function () {
+          circlePaused = true;
+          circle.classList.add(
+            "hovered"
+          );
+        }
+      );
+
+      circle.addEventListener(
+        "blur",
+        function () {
+
+          clearDesktopHoverTimer();
+
+          circle.classList.remove(
+            "hovered"
+          );
+
+          if (!desktopLatchedPaused) {
+            circlePaused = false;
+
+            previousCircleTime =
+              performance.now();
+          }
+        }
+      );
+    }
+
+
+    /* =================================================
+       MOBILE / TOUCH
+
+       0  moving small
+          tap
+       1  paused small
+          tap
+       2  paused big + draggable
+          tap
+       3  paused small
+          tap
+       0  moving small, with a new random direction
+
+       Dragging only works in state 2.
+       Releasing after a drag leaves the ball big and still.
+    ================================================= */
+
+    let mobileCircleState = 0;
+
+    function applyMobileCircleState() {
+
+      if (mobileCircleState === 0) {
+        circlePaused = false;
+        circle.classList.remove("hovered");
+      }
+
+      if (mobileCircleState === 1) {
+        circlePaused = true;
+        circle.classList.remove("hovered");
+      }
+
+      if (mobileCircleState === 2) {
+        circlePaused = true;
+        circle.classList.add("hovered");
+      }
+
+      if (mobileCircleState === 3) {
+        circlePaused = true;
+        circle.classList.remove("hovered");
+      }
+
+      previousCircleTime =
+        performance.now();
+    }
+
+    function advanceMobileCircleState() {
+
+      if (mobileCircleState === 0) {
+        mobileCircleState = 1;
+      }
+
+      else if (mobileCircleState === 1) {
+        mobileCircleState = 2;
+      }
+
+      else if (mobileCircleState === 2) {
+        mobileCircleState = 3;
+      }
+
+      else {
+        mobileCircleState = 0;
+        randomizeCircleDirection();
+      }
+
+      applyMobileCircleState();
+    }
+
+
+    if (!circleCanHover) {
+
+      applyMobileCircleState();
+
+      circle.addEventListener(
+        "pointerdown",
+        function (event) {
+
+          pointerStartX = event.clientX;
+          pointerStartY = event.clientY;
+          pointerMoved = false;
+
+          circlePaused = true;
+
+          if (mobileCircleState === 2) {
+
+            isDragging = false;
+
+            dragOffsetX =
+              event.clientX - circleX;
+
+            dragOffsetY =
+              event.clientY - circleY;
+          }
+
+          circle.setPointerCapture(
+            event.pointerId
+          );
+        }
+      );
+
+
+      circle.addEventListener(
+        "pointermove",
+        function (event) {
+
+          const dx =
+            event.clientX - pointerStartX;
+
+          const dy =
+            event.clientY - pointerStartY;
+
+          const distance =
+            Math.hypot(dx, dy);
+
+          if (
+            distance > dragThreshold
+          ) {
+            pointerMoved = true;
+          }
+
+          if (
+            mobileCircleState !== 2 ||
+            !pointerMoved
+          ) {
+            return;
+          }
+
+          isDragging = true;
+
+          circle.classList.add(
+            "dragging"
+          );
+
+          setCirclePosition(
+            event.clientX - dragOffsetX,
+            event.clientY - dragOffsetY
+          );
+        }
+      );
+
+
+      circle.addEventListener(
+        "pointerup",
+        function (event) {
+
+          if (
+            circle.hasPointerCapture(
+              event.pointerId
+            )
+          ) {
+            circle.releasePointerCapture(
+              event.pointerId
+            );
+          }
+
+          if (isDragging) {
+
+            isDragging = false;
+
+            circle.classList.remove(
+              "dragging"
+            );
+
+            mobileCircleState = 2;
+            applyMobileCircleState();
+
+            return;
+          }
+
+          if (pointerMoved) {
+
+            if (mobileCircleState === 0) {
+              circlePaused = false;
+              previousCircleTime =
+                performance.now();
+            } else {
+              applyMobileCircleState();
+            }
+
+            return;
+          }
+
+          advanceMobileCircleState();
+        }
+      );
+
+
+      circle.addEventListener(
+        "pointercancel",
+        function () {
+
+          isDragging = false;
+          pointerMoved = false;
+
+          circle.classList.remove(
+            "dragging"
+          );
+
+          applyMobileCircleState();
+        }
+      );
+    }
 
 
     /* ------------------------------
@@ -661,47 +1031,28 @@
         circleY += circleVY * delta;
 
 
-        /* left */
-
         if (circleX <= 0) {
-
           circleX = 0;
           circleVX =
             Math.abs(circleVX);
-
         }
 
-
-        /* right */
-
         if (circleX >= maxX) {
-
           circleX = maxX;
           circleVX =
             -Math.abs(circleVX);
-
         }
 
-
-        /* top */
-
         if (circleY <= 0) {
-
           circleY = 0;
           circleVY =
             Math.abs(circleVY);
-
         }
 
-
-        /* bottom */
-
         if (circleY >= maxY) {
-
           circleY = maxY;
           circleVY =
             -Math.abs(circleVY);
-
         }
 
 
@@ -710,14 +1061,12 @@
 
         circle.style.top =
           `${circleY}px`;
-
       }
 
 
       requestAnimationFrame(
         animateCircle
       );
-
     }
 
 
