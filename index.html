@@ -75,7 +75,8 @@
       pointer-events: none;
     }
 
-    .image-stack.is-hovered .hero-color {
+    .image-stack.is-hovered .hero-color,
+    .image-stack.show-color .hero-color {
       opacity: 1;
     }
 
@@ -401,6 +402,21 @@
       window.addEventListener(
         "pageshow",
         resetHeroImage
+      );
+
+    } else {
+
+      /*
+        Mobile / touch:
+        tap once to show world.jpg,
+        tap again to return to hello.jpg.
+      */
+
+      image.addEventListener(
+        "click",
+        function () {
+          image.classList.toggle("show-color");
+        }
       );
     }
 
