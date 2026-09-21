@@ -9,6 +9,7 @@
   <!-- Alegreya SC + Afacad -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
   <link
     href="https://fonts.googleapis.com/css2?family=Afacad:ital,wght@0,400;0,500;0,600;1,400&family=Alegreya+SC:wght@500;600;700&family=Noto+Serif+KR:wght@400;500;600&display=swap"
     rel="stylesheet"
@@ -83,7 +84,7 @@
     .image-stack.show-color .hero-color {
       opacity: 1;
     }
-    
+
     /* ---------- dictionary ---------- */
 
     .dictionary {
@@ -105,12 +106,24 @@
     }
 
     .ipa {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
       font-size: 0.88em;
     }
 
     .pi-symbol {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Arial,
+        sans-serif;
+
       font-size: 0.86em;
       font-weight: 520;
     }
@@ -138,13 +151,61 @@
       opacity: 0.65;
     }
 
-    /* Korean: a quieter bookish face that fits the dictionary mood */
+    /* Korean */
     .ko {
       font-family: "Noto Serif KR", serif;
       font-weight: 500;
       font-size: 0.84em;
       letter-spacing: -0.015em;
     }
+
+    /* ---------- wandering circle ---------- */
+
+    .wandering-circle {
+      position: fixed;
+
+      left: 100px;
+      top: 100px;
+
+      width: 64px;
+      height: 64px;
+
+      padding: 0;
+      border: 0;
+
+      background: #151515;
+      border-radius: 50%;
+
+      z-index: 1000;
+
+      cursor: pointer;
+
+      transition:
+        transform 0.6s cubic-bezier(.2, .8, .2, 1),
+        opacity 0.6s ease;
+
+      appearance: none;
+      -webkit-appearance: none;
+
+      touch-action: none;
+      user-select: none;
+    }
+
+    .wandering-circle.hovered {
+      transform: scale(1.7);
+      opacity: 0.25;
+    }
+
+    .wandering-circle.dragging {
+      cursor: grabbing;
+    }
+
+    .wandering-circle:focus-visible {
+      outline: 2px solid #c96f24;
+      outline-offset: 6px;
+    }
+
+    /* ---------- mobile ---------- */
 
     @media (max-width: 600px) {
       .page {
@@ -175,75 +236,147 @@
         font-size: 1.3rem;
         padding-left: 1.55rem;
       }
+
+      .wandering-circle {
+        width: 54px;
+        height: 54px;
+      }
+    }
+
+    /* Don't animate around the screen for users
+       who prefer reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .wandering-circle {
+        left: 75%;
+        top: 60%;
+      }
     }
   </style>
 </head>
 
 <body>
 
-  <div class="zoom-backdrop" id="zoomBackdrop"></div>
+  <div
+    class="zoom-backdrop"
+    id="zoomBackdrop"
+  ></div>
 
   <main class="page">
 
     <!-- First screen: photograph, then the word -->
     <section class="opening">
+
       <div class="image-wrap">
-        <div class="image-stack" id="heroImage">
+
+        <div
+          class="image-stack"
+          id="heroImage"
+        >
+
           <img
             src="hello.jpg"
             alt="Pilemma"
             class="hero hero-bw"
           >
+
           <img
             src="world.jpg"
             alt=""
             class="hero hero-color"
             aria-hidden="true"
           >
+
         </div>
+
       </div>
 
       <h1 class="word">pilemma</h1>
 
       <div class="meta">
-        <span class="ipa">/piːˈlɛmə/</span>
-        <span class="noun">noun</span>
+
+        <span class="ipa">
+          /piːˈlɛmə/
+        </span>
+
+        <span class="noun">
+          noun
+        </span>
+
       </div>
+
     </section>
 
     <!-- Scroll down for the dictionary entry -->
+
     <section class="dictionary">
 
       <ol class="definitions">
+
         <li>
-          a pile of <a
+          a pile of
+          <a
             href="https://en.wiktionary.org/wiki/lemma"
             target="_blank"
             rel="noopener noreferrer"
-          >lemmas</a> for things noticed, drawn, or thought about.
+          >lemmas</a>
+          for things noticed, drawn, or thought about.
         </li>
 
         <li>
-          a.k.a. <strong><span class="pi-symbol">π</span>-lemma</strong>: an irrational version of a dilemma.
+          a.k.a.
+          <strong>
+            <span class="pi-symbol">π</span>-lemma
+          </strong>:
+          an irrational version of a dilemma.
         </li>
 
         <li>
-          cf. <span class="ko">필름</span> (<em>pilleum</em>), “film.”
+          cf.
+          <span class="ko">필름</span>
+          (<em>pilleum</em>),
+          “film.”
         </li>
+
       </ol>
 
     </section>
 
   </main>
 
+  <!-- Wandering circle -->
+  <!-- It does not link anywhere yet -->
+
+  <button
+    class="wandering-circle"
+    id="wanderingCircle"
+    type="button"
+    aria-label="Wandering circle"
+  ></button>
+
   <script>
+
+    /* ---------------------------------
+       Existing image interaction
+    --------------------------------- */
+
     const image = document.getElementById("heroImage");
-    const backdrop = document.getElementById("zoomBackdrop");
-    const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+    const backdrop =
+      document.getElementById("zoomBackdrop");
+
+    const canHover =
+      window.matchMedia(
+        "(hover: hover) and (pointer: fine)"
+      ).matches;
 
     function toggleZoom() {
-      const isZoomed = image.classList.toggle("zoomed");
-      backdrop.classList.toggle("active", isZoomed);
+      const isZoomed =
+        image.classList.toggle("zoomed");
+
+      backdrop.classList.toggle(
+        "active",
+        isZoomed
+      );
     }
 
     function closeZoom() {
@@ -251,21 +384,347 @@
       backdrop.classList.remove("active");
     }
 
-    image.addEventListener("dblclick", toggleZoom);
+    image.addEventListener(
+      "dblclick",
+      toggleZoom
+    );
 
     if (!canHover) {
-      image.addEventListener("click", function() {
-        image.classList.toggle("show-color");
-      });
+      image.addEventListener(
+        "click",
+        function () {
+          image.classList.toggle(
+            "show-color"
+          );
+        }
+      );
     }
 
-    backdrop.addEventListener("click", closeZoom);
+    backdrop.addEventListener(
+      "click",
+      closeZoom
+    );
 
-    document.addEventListener("keydown", function(event) {
-      if (event.key === "Escape") {
-        closeZoom();
+    document.addEventListener(
+      "keydown",
+      function (event) {
+        if (event.key === "Escape") {
+          closeZoom();
+        }
       }
-    });
+    );
+
+    /* ---------------------------------
+       Wandering circle
+    --------------------------------- */
+
+    const circle =
+      document.getElementById(
+        "wanderingCircle"
+      );
+
+    let circleX = 100;
+    let circleY = 100;
+
+    /* wandering speed */
+    let circleVX = 12;
+    let circleVY = 8;
+
+    let circlePaused = false;
+    let isDragging = false;
+
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    let previousCircleTime =
+      performance.now();
+
+    const prefersReducedMotion =
+      window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+
+
+    /* ------------------------------
+       Hover
+    ------------------------------ */
+
+    function pauseCircle() {
+      circlePaused = true;
+      circle.classList.add("hovered");
+    }
+
+    function resumeCircle() {
+      if (isDragging) return;
+
+      circlePaused = false;
+      circle.classList.remove("hovered");
+
+      previousCircleTime =
+        performance.now();
+    }
+
+    circle.addEventListener(
+      "pointerenter",
+      pauseCircle
+    );
+
+    circle.addEventListener(
+      "pointerleave",
+      resumeCircle
+    );
+
+
+    /* ------------------------------
+       Dragging
+    ------------------------------ */
+
+    circle.addEventListener(
+      "pointerdown",
+      function (event) {
+
+        isDragging = true;
+        circlePaused = true;
+
+        circle.classList.add("hovered");
+        circle.classList.add("dragging");
+
+        circle.setPointerCapture(
+          event.pointerId
+        );
+
+        dragOffsetX =
+          event.clientX - circleX;
+
+        dragOffsetY =
+          event.clientY - circleY;
+      }
+    );
+
+
+    circle.addEventListener(
+      "pointermove",
+      function (event) {
+
+        if (!isDragging) return;
+
+        const size =
+          circle.offsetWidth;
+
+        const maxX =
+          window.innerWidth - size;
+
+        const maxY =
+          window.innerHeight - size;
+
+        circleX =
+          event.clientX - dragOffsetX;
+
+        circleY =
+          event.clientY - dragOffsetY;
+
+        /* Keep it inside the browser window */
+
+        circleX = Math.max(
+          0,
+          Math.min(maxX, circleX)
+        );
+
+        circleY = Math.max(
+          0,
+          Math.min(maxY, circleY)
+        );
+
+        circle.style.left =
+          `${circleX}px`;
+
+        circle.style.top =
+          `${circleY}px`;
+      }
+    );
+
+
+    circle.addEventListener(
+      "pointerup",
+      function (event) {
+
+        isDragging = false;
+
+        circle.classList.remove(
+          "dragging"
+        );
+
+        if (
+          circle.hasPointerCapture(
+            event.pointerId
+          )
+        ) {
+          circle.releasePointerCapture(
+            event.pointerId
+          );
+        }
+
+        /*
+          If the pointer is still over the circle,
+          keep it expanded and paused.
+        */
+
+        if (circle.matches(":hover")) {
+
+          circlePaused = true;
+          circle.classList.add(
+            "hovered"
+          );
+
+        } else {
+
+          circlePaused = false;
+          circle.classList.remove(
+            "hovered"
+          );
+        }
+
+        previousCircleTime =
+          performance.now();
+      }
+    );
+
+
+    circle.addEventListener(
+      "pointercancel",
+      function () {
+
+        isDragging = false;
+
+        circle.classList.remove(
+          "dragging"
+        );
+
+        circle.classList.remove(
+          "hovered"
+        );
+
+        circlePaused = false;
+
+        previousCircleTime =
+          performance.now();
+      }
+    );
+
+
+    /* ------------------------------
+       Keyboard
+    ------------------------------ */
+
+    circle.addEventListener(
+      "focus",
+      pauseCircle
+    );
+
+    circle.addEventListener(
+      "blur",
+      resumeCircle
+    );
+
+
+    /* ------------------------------
+       Wandering animation
+    ------------------------------ */
+
+    function animateCircle(time) {
+
+      const delta = Math.min(
+        (time - previousCircleTime) / 1000,
+        0.05
+      );
+
+      previousCircleTime = time;
+
+
+      if (
+        !circlePaused &&
+        !isDragging &&
+        !prefersReducedMotion
+      ) {
+
+        const size =
+          circle.offsetWidth;
+
+        const maxX =
+          window.innerWidth - size;
+
+        const maxY =
+          window.innerHeight - size;
+
+
+        circleX += circleVX * delta;
+        circleY += circleVY * delta;
+
+
+        /* left */
+
+        if (circleX <= 0) {
+
+          circleX = 0;
+          circleVX =
+            Math.abs(circleVX);
+
+        }
+
+
+        /* right */
+
+        if (circleX >= maxX) {
+
+          circleX = maxX;
+          circleVX =
+            -Math.abs(circleVX);
+
+        }
+
+
+        /* top */
+
+        if (circleY <= 0) {
+
+          circleY = 0;
+          circleVY =
+            Math.abs(circleVY);
+
+        }
+
+
+        /* bottom */
+
+        if (circleY >= maxY) {
+
+          circleY = maxY;
+          circleVY =
+            -Math.abs(circleVY);
+
+        }
+
+
+        circle.style.left =
+          `${circleX}px`;
+
+        circle.style.top =
+          `${circleY}px`;
+
+      }
+
+
+      requestAnimationFrame(
+        animateCircle
+      );
+
+    }
+
+
+    requestAnimationFrame(
+      animateCircle
+    );
+
   </script>
 
 </body>
