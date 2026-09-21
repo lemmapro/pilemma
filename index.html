@@ -75,13 +75,7 @@
       pointer-events: none;
     }
 
-    @media (hover: hover) and (pointer: fine) {
-      .image-stack:hover .hero-color {
-        opacity: 1;
-      }
-    }
-
-    .image-stack.show-color .hero-color {
+    .image-stack.is-hovered .hero-color {
       opacity: 1;
     }
 
@@ -164,8 +158,8 @@
     .wandering-circle {
       position: fixed;
 
-      left: 50px;
-      top: 50px;
+      left: 30px;
+      top: 30px;
 
       width: 64px;
       height: 64px;
@@ -255,11 +249,6 @@
 </head>
 
 <body>
-
-  <div
-    class="zoom-backdrop"
-    id="zoomBackdrop"
-  ></div>
 
   <main class="page">
 
@@ -356,63 +345,65 @@
   <script>
 
     /* ---------------------------------
-       Existing image interaction
+       Image interaction
+       Desktop only: hover fades to color.
+       Leaving the tab/window always resets
+       the image to hello.jpg.
     --------------------------------- */
 
-    const image = document.getElementById("heroImage");
+    const image =
+      document.getElementById("heroImage");
 
-    const backdrop =
-      document.getElementById("zoomBackdrop");
-
-    const canHover =
+    const imageCanHover =
       window.matchMedia(
         "(hover: hover) and (pointer: fine)"
       ).matches;
 
-    function toggleZoom() {
-      const isZoomed =
-        image.classList.toggle("zoomed");
-
-      backdrop.classList.toggle(
-        "active",
-        isZoomed
-      );
+    function resetHeroImage() {
+      image.classList.remove("is-hovered");
     }
 
-    function closeZoom() {
-      image.classList.remove("zoomed");
-      backdrop.classList.remove("active");
-    }
+    if (imageCanHover) {
 
-    image.addEventListener(
-      "dblclick",
-      toggleZoom
-    );
-
-    if (!canHover) {
       image.addEventListener(
-        "click",
+        "pointerenter",
         function () {
-          image.classList.toggle(
-            "show-color"
-          );
+          image.classList.add("is-hovered");
         }
+      );
+
+      image.addEventListener(
+        "pointerleave",
+        resetHeroImage
+      );
+
+      /*
+        Safari can preserve a stale :hover-like visual
+        state when a tab or window loses focus.
+        Explicitly reset it whenever the page is hidden
+        or the browser window loses focus.
+      */
+
+      document.addEventListener(
+        "visibilitychange",
+        function () {
+          if (document.hidden) {
+            resetHeroImage();
+          }
+        }
+      );
+
+      window.addEventListener(
+        "blur",
+        resetHeroImage
+      );
+
+      window.addEventListener(
+        "pageshow",
+        resetHeroImage
       );
     }
 
-    backdrop.addEventListener(
-      "click",
-      closeZoom
-    );
-
-    document.addEventListener(
-      "keydown",
-      function (event) {
-        if (event.key === "Escape") {
-          closeZoom();
-        }
-      }
-    );
 
     /* ---------------------------------
        Wandering circle
@@ -423,8 +414,8 @@
         "wanderingCircle"
       );
 
-    let circleX = 50;
-    let circleY = 50;
+    let circleX = 30;
+    let circleY = 30;
 
     const circleSpeed = Math.hypot(12, 8);
     let circleVX = 12;
