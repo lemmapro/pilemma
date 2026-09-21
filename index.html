@@ -860,9 +860,6 @@
 
     let mobileCircleState = 0;
 
-    let mobileTapTimer = null;
-    const mobileDoubleTapDelay = 300;
-
     function applyMobileCircleState() {
 
       if (mobileCircleState === 0) {
@@ -1006,6 +1003,35 @@
               "dragging"
             );
 
+            /*
+              Mobile shortcut:
+              if the enlarged ball is released against
+              any edge of the viewport, open the linked page.
+              We trigger on release, not while dragging,
+              so brushing an edge does not navigate by accident.
+            */
+
+            const size =
+              circle.offsetWidth;
+
+            const maxX =
+              window.innerWidth - size;
+
+            const maxY =
+              window.innerHeight - size;
+
+            const atEdge =
+              circleX <= 0 ||
+              circleX >= maxX ||
+              circleY <= 0 ||
+              circleY >= maxY;
+
+            if (atEdge) {
+              window.location.href =
+                circleDestination;
+              return;
+            }
+
             mobileCircleState = 2;
             applyMobileCircleState();
 
@@ -1025,38 +1051,7 @@
             return;
           }
 
-          /*
-            Mobile:
-            wait briefly before treating this as
-            a single tap. If a second tap arrives
-            within 300 ms, open the linked page
-            instead of advancing the circle twice.
-          */
-
-          if (mobileTapTimer !== null) {
-
-            clearTimeout(
-              mobileTapTimer
-            );
-
-            mobileTapTimer = null;
-
-            window.location.href =
-              circleDestination;
-
-            return;
-          }
-
-          mobileTapTimer =
-            setTimeout(
-              function () {
-
-                mobileTapTimer = null;
-
-                advanceMobileCircleState();
-              },
-              mobileDoubleTapDelay
-            );
+          advanceMobileCircleState();
         }
       );
 
@@ -1064,13 +1059,6 @@
       circle.addEventListener(
         "pointercancel",
         function () {
-
-          if (mobileTapTimer !== null) {
-            clearTimeout(
-              mobileTapTimer
-            );
-            mobileTapTimer = null;
-          }
 
           isDragging = false;
           pointerMoved = false;
